@@ -1,1 +1,1 @@
-# futbolyestadisticas.github.io
+# jugadorfavorito.github.io
