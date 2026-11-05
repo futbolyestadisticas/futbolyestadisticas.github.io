@@ -1,10 +1,11 @@
 // Aquest és l’únic fitxer que cal editar per afegir o canviar equips i jugadors.
 // Posicions: P porter, D defensa, M migcampista, A davanter.
+// league: nom de la lliga. Els equips amb la mateixa lliga surten junts, en l’ordre en què apareixen aquí.
 // Imatges: img/players/<id>/<nom-del-jugador>.png i img/crests/<id>.png
 // Opcional: colors:["#color1","#color2"] per tenyir la imatge final d’un equip.
 // Opcional: un tercer valor a un jugador per usar un altre nom de fitxer: ["Nom","A","altre.png"]
 const TEAMS=[
- {id:"barcelona",name:"FC Barcelona",season:"2026/27",players:[
+ {id:"barcelona",name:"FC Barcelona",league:"LaLiga",season:"2026/27",players:[
   ["Lamine Yamal","A"],["Fermín López","A"],["Pedri","M"],["Pau Cubarsí","D"],["Raphinha","A"],
   ["Joan García","P"],["Rodri","M"],["Gerard Martín","D"],["Xavi Espart","D"],["Eric García","D"],
   ["Gavi","M"],["Dani Olmo","M"],["Marc Bernal","M"],["Alejandro Balde","D"],["Anthony Gordon","A"],
@@ -13,3 +14,4 @@ const TEAMS=[
   ["Gabriel Jesus","A"],["Hamza Abdelkarim","A"],["Frenkie de Jong","M"]
  ]}
 ];
+ 
