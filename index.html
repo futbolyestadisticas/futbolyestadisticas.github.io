@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Ranquing de jugadors</title>
+<style>
+:root{color-scheme:light;--bg:#f3efdc;--card:#fbfaf1;--tx:#161a20;--mut:#625a40;--bd:#dcd5b5;--btn:#2d3846;--hi:#ece5c0;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*,*::before,*::after{box-sizing:inherit}
+body{margin:0;background:var(--bg);color:var(--tx);font:16px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+.hd{background:#1d232c;border-bottom:1px solid #3a4452;color:#fff;padding:26px 16px 22px}
+.hd div,main{max-width:720px;margin:0 auto}
+h1{font:italic 800 clamp(2rem,8vw,3rem)/1 "Arial Narrow","Helvetica Neue",Arial,sans-serif;margin:0}
+.hd p{margin:6px 0 0;color:#c3c9d3}
+main{padding:18px 16px 48px}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:16px;margin:0 0 14px}
+h2{font-size:1.05rem;margin:0 0 10px}
+.mut{color:var(--mut);font-size:.92rem;margin:8px 0 0}
+.lh{font:italic 800 1.6rem/1 "Arial Narrow","Helvetica Neue",Arial,sans-serif;margin:22px 0 10px}
+.tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px}
+.tile{font:inherit;border:0;border-radius:14px;padding:14px;min-height:84px;display:flex;align-items:center;gap:14px;cursor:pointer;text-align:left;outline-offset:3px}
+.tile[aria-pressed=true]{outline:3px solid var(--tx)}
+.tile .cr{position:relative;flex:none;width:56px;height:56px;font:italic 800 1.1rem "Arial Narrow",Arial,sans-serif}
+.tile .in{display:grid;place-items:center;width:100%;height:100%;border:2px solid currentColor;border-radius:50%}
+.tile .cr img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain}
+.tile b{display:block;font:italic 800 1.3rem/1.1 "Arial Narrow","Helvetica Neue",Arial,sans-serif}
+.tile small{opacity:.85}
+.row{display:flex;gap:10px;align-items:center;margin-top:10px;flex-wrap:wrap}
+.chips{display:flex;gap:8px;flex-wrap:wrap}
+.chip{border:1px solid var(--bd);border-radius:999px;padding:8px 14px;cursor:pointer;user-select:none}
+.chip input{position:absolute;opacity:0;pointer-events:none}
+.chip:has(input:checked){background:var(--btn);border-color:var(--btn);color:#fff;font-weight:700}
+.chip:has(input:focus-visible),.btn:focus-visible,.pick:focus-visible,.tile:focus-visible{outline:3px solid #8aa4c8;outline-offset:2px}
+.btn{font:inherit;font-weight:700;border:0;border-radius:12px;padding:13px 20px;background:var(--btn);color:#fff;cursor:pointer}
+.btn.alt{background:transparent;color:var(--tx);border:1px solid var(--bd)}
+.duel{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:14px 0}
+.pick{font:inherit;color:var(--tx);background:var(--card);border:2px solid var(--bd);border-radius:16px;padding:22px 8px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:10px}
+.pick:hover{border-color:var(--btn);background:var(--hi)}
+.av{position:relative;overflow:hidden;width:104px;height:104px;border-radius:50%;display:grid;place-items:center;color:#fff;font:italic 800 2rem "Arial Narrow",Arial,sans-serif;border:3px solid var(--bd)}
+.av img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:top}
+.nm{font:italic 800 1.3rem/1.1 "Arial Narrow","Helvetica Neue",Arial,sans-serif;text-align:center}
+.bar{height:8px;background:var(--bd);border-radius:9px;overflow:hidden;margin:12px 0 6px}
+.bar i{display:block;height:100%;width:0;background:var(--btn);transition:width .2s}
+#tie{width:100%}
+#out{width:100%;max-width:420px;display:block;margin:0 auto 12px;border-radius:12px;border:1px solid var(--bd)}
+#err{color:#c0153c;margin:10px 0 0}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<div class="hd"><div><h1>Ranquing de jugadors</h1><p>Tria entre dos jugadors cada vegada i obtén el teu ranquing.</p></div></div>
+<main>
+<section id="s1">
+ <h2>Tria un equip</h2>
+ <div id="lg"></div>
+ <h2 style="margin-top:26px">Quins jugadors vols ranquejar?</h2>
+ <div class="chips" id="ps"></div>
+ <p class="mut" id="sum"></p>
+ <button class="btn" id="go" style="margin-top:12px">Comença</button><p id="err" role="alert"></p>
+</section>
+<section id="s2" hidden>
+ <div class="bar"><i id="pb"></i></div>
+ <p class="mut" id="pt"></p>
+ <div class="duel"><button class="pick" id="pa"></button><button class="pick" id="pbk"></button></div>
+ <button class="btn alt" id="tie">Empat, no puc triar</button>
+ <p class="mut">Pots fer servir les fletxes del teclat: esquerra, dreta i avall per a l’empat.</p>
+ <button class="btn alt" id="stop" style="margin-top:8px">Torna al començament</button>
+</section>
+<section id="s3" hidden>
+ <img id="out" alt="El teu ranquing final">
+ <p class="mut" style="text-align:center">Per desar la imatge, mantén-la premuda al mòbil o fes clic dret a l’ordinador.</p>
+ <div class="row" style="justify-content:center"><button class="btn" id="again">Fer un altre ranquing</button></div>
+</section>
+</main>
+<script src="teams.js"></script>
+<script>
+const POS={P:"Porter",D:"Defensa",M:"Migcampista",A:"Davanter"},POSP={P:"Porters",D:"Defenses",M:"Migcampistes",A:"Davanters"};
+const $=id=>document.getElementById(id);
+const slug=n=>n.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"");
+const TL=(typeof TEAMS==="undefined"?[]:TEAMS).map(t=>({...t,c1:t.colors?.[0]||"#3b4658",c2:t.colors?.[1]||"#1c222b",
+ list:t.players.map(([name,pos,file])=>({name,pos,src:`img/players/${t.id}/${file||slug(name)+".png"}`}))}));
+let sel=-1;
+const dark=h=>{const n=parseInt(h.slice(1),16);return .299*(n>>16)+.587*(n>>8&255)+.114*(n&255)<150};
+[...new Set(TL.map(t=>t.league||"Altres"))].forEach(l=>{
+ const h=document.createElement("h3"),g=document.createElement("div");h.className="lh";h.textContent=l;g.className="tiles";
+ TL.forEach((t,i)=>{if((t.league||"Altres")!==l)return;
+  const b=document.createElement("button");b.className="tile";b.setAttribute("aria-pressed","false");
+  b.style.background=`linear-gradient(105deg,${t.c1} 55%,${t.c2})`;b.style.color=dark(t.c1)?"#fff":"#161a20";
+  b.innerHTML='<span class="cr"><span class="in"></span><img alt=""></span><span><b></b><small></small></span>';
+  b.querySelector(".in").textContent=t.name.split(/\s+/).map(w=>w[0]).join("").slice(0,3).toUpperCase();
+  b.querySelector("b").textContent=t.name;
+  b.querySelector("small").textContent=t.list.length+" jugadors"+(t.season?", "+t.season:"");
+  const im=b.querySelector("img");im.onerror=()=>im.remove();im.onload=()=>b.querySelector(".in").hidden=true;im.src=`img/crests/${t.id}.png`;
+  b.onclick=()=>{sel=i;document.querySelectorAll(".tile").forEach(x=>x.setAttribute("aria-pressed",x===b));refresh()};
+  g.append(b)});
+ $("lg").append(h,g)});
+$("ps").innerHTML=Object.keys(POSP).map(k=>`<label class="chip"><input type="checkbox" value="${k}" checked>${POSP[k]}</label>`).join("");
+let team,players,cmp,est,resolver,par,label,pre;
+const selected=()=>[...document.querySelectorAll("#ps input:checked")].map(i=>i.value);
+const pool=()=>{const t=TL[sel];return{t,list:t?t.list.filter(p=>selected().includes(p.pos)):[]}};
+function refresh(){const n=pool().list.length,k=Math.ceil(Math.log2(Math.max(n,1))),m=n<2?0:n*k-2**k+1;
+ $("sum").textContent=!TL.length?"No s’ha trobat el fitxer teams.js.":sel<0?"Primer tria un equip.":n+(n===1?" jugador":" jugadors")+(n>1?", com a màxim "+m+" duels.":".");$("err").textContent=""}
+$("s1").addEventListener("input",refresh);refresh();
+const show=id=>["s1","s2","s3"].forEach(s=>$(s).hidden=s!==id);
+const shuffle=a=>{for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]]}return a};
+const ini=n=>{const w=n.split(/\s+/);return(w[0][0]+(w.length>1?w[w.length-1][0]:"")).toUpperCase()};
+const find=x=>{while(par.get(x)!==x)x=par.get(x);return x};
+const loadImg=s=>new Promise(r=>{const i=new Image();i.onload=()=>r(i);i.onerror=()=>r(null);i.src=s});
+$("go").onclick=async()=>{const{t,list}=pool();
+ if(!t){$("err").textContent="Tria un equip.";return}
+ if(list.length<2){$("err").textContent="Cal triar almenys dos jugadors.";return}
+ team=t;const s=selected();label=s.length===4?"Tota la plantilla":s.map(k=>POSP[k]).join(" + ");
+ players=shuffle(list.slice());par=new Map(players.map(p=>[p,p]));cmp=0;
+ const n=players.length,k=Math.ceil(Math.log2(n));est=n*k-2**k+1;
+ pre=Promise.all([...players.map(p=>loadImg(p.src).then(i=>p.im=i)),loadImg(`img/crests/${t.id}.png`).then(i=>t.crestIm=i)]);
+ show("s2");const sorted=await msort(players);if(sorted)finish(sorted)};
+async function msort(a){if(a.length<2)return a;const m=a.length>>1,l=await msort(a.slice(0,m)),r=await msort(a.slice(m));
+ if(!l||!r)return null;const o=[];let i=0,j=0;
+ while(i<l.length&&j<r.length){const c=await ask(l[i],r[j]);if(c===null)return null;
+  if(c<0)o.push(l[i++]);else if(c>0)o.push(r[j++]);else{par.set(find(l[i]),find(r[j]));o.push(l[i++],r[j++])}}
+ return o.concat(l.slice(i),r.slice(j))}
+function card(b,p){b.innerHTML=`<span class="av" style="background:${team.c1}"><span class="in">${ini(p.name)}</span><img alt=""></span><span class="nm"></span><span class="mut">${POS[p.pos]||""}</span>`;
+ b.querySelector(".nm").textContent=p.name;const im=b.querySelector("img");
+ im.onerror=()=>im.remove();im.onload=()=>b.querySelector(".in").hidden=true;im.src=p.src}
+function ask(a,b){card($("pa"),a);card($("pbk"),b);
+ $("pb").style.width=Math.min(100,cmp/est*100)+"%";$("pt").textContent="Duel "+(cmp+1)+" de com a màxim "+Math.max(est,cmp+1);
+ return new Promise(r=>resolver=r)}
+function choose(v){if(!resolver)return;cmp++;const r=resolver;resolver=null;r(v)}
+$("pa").onclick=()=>choose(-1);$("pbk").onclick=()=>choose(1);$("tie").onclick=()=>choose(0);
+$("stop").onclick=$("again").onclick=()=>{if(resolver){resolver(null);resolver=null}show("s1")};
+addEventListener("keydown",e=>{if($("s2").hidden)return;
+ if(e.key==="ArrowLeft")choose(-1);else if(e.key==="ArrowRight")choose(1);else if(e.key==="ArrowDown")choose(0)});
+async function finish(sorted){await pre;const rk=[],tied=[];
+ sorted.forEach((p,i)=>{const same=i>0&&find(sorted[i-1])===find(p);rk[i]=same?rk[i-1]:i+1;if(same){tied[i]=tied[i-1]=true}});
+ let url;try{url=draw(sorted,rk,tied,true)}catch(e){url=draw(sorted,rk,tied,false)}
+ $("out").src=url;show("s3")}
+const F='"Arial Narrow","Helvetica Neue",Arial,sans-serif';
+function draw(list,rk,tied,u){const T=team,W=1080,n=list.length,top=Math.min(3,n),rest=n-top,col=Math.ceil(rest/2);
+ const big=[138,138,94],gap=14,rowH=72,rg=8;let bigH=0;for(let i=0;i<top;i++)bigH+=big[i]+gap;
+ const H=395+bigH+(rest?col*(rowH+rg)+10:0)+150;
+ const c=document.createElement("canvas");c.width=W;c.height=H;const x=c.getContext("2d");
+ const rr=(a,b,w,h,r)=>{x.beginPath();x.roundRect?x.roundRect(a,b,w,h,r):x.rect(a,b,w,h)};
+ const fit=(t,px,w)=>{let s=px;do{x.font=`italic 800 ${s}px ${F}`;s-=2}while(x.measureText(t).width>w&&s>12)};
+ const av=(cx,cy,r,p)=>{x.fillStyle=T.c1;x.beginPath();x.arc(cx,cy,r,0,7);x.fill();
+  if(u&&p.im){x.save();x.beginPath();x.arc(cx,cy,r,0,7);x.clip();const d=2*r,s=Math.max(d/p.im.width,d/p.im.height),w=p.im.width*s,h=p.im.height*s;x.drawImage(p.im,cx-w/2,cy-r,w,h);x.restore()}
+  else{x.fillStyle="#fff";x.textAlign="center";x.font=`italic 800 ${r*.8}px ${F}`;x.fillText(ini(p.name),cx,cy+2)}};
+ x.textBaseline="middle";x.fillStyle=T.c2;x.fillRect(0,0,W,H);
+ for(let i=0;i*54<W;i++){x.fillStyle=i%2?T.c2:T.c1;x.fillRect(i*54,0,54,326)}
+ x.fillStyle="#c3c9d3";x.fillRect(0,326,W,14);
+ const cr=T.crestIm;
+ if(u&&cr){const s=Math.min(170/cr.width,170/cr.height),w=cr.width*s,h=cr.height*s;x.drawImage(cr,152-w/2,165-h/2,w,h)}
+ else{const b=T.name.split(/\s+/).map(w=>w[0]).join("").slice(0,3).toUpperCase();
+  x.fillStyle="#c3c9d3";x.beginPath();x.arc(152,165,84,0,7);x.fill();x.fillStyle=T.c2;x.beginPath();x.arc(152,165,70,0,7);x.fill();
+  x.fillStyle="#c3c9d3";x.textAlign="center";fit(b,64,110);x.fillText(b,152,167)}
+ x.textAlign="left";x.fillStyle="#fff";x.font=`700 28px ${F}`;x.fillText("EL MEU RÀNQUING",277,106);
+ fit(T.name.toUpperCase(),104,740);x.fillText(T.name.toUpperCase(),277,172);
+ x.font=`400 28px ${F}`;x.fillText((T.season?"Plantilla "+T.season+", ":"")+label,277,232);
+ let y=395;
+ for(let i=0;i<top;i++){const h=big[i],r=i<2?49:33;rr(64,y,952,h,18);x.fillStyle=i<2?"#dfe2e8":"#f1f2f5";x.fill();
+  x.fillStyle=T.c1;x.textAlign="center";x.font=`italic 800 ${i<2?66:50}px ${F}`;x.fillText(rk[i]+(tied[i]?"=":""),160,y+h/2+2);
+  av(265,y+h/2,r,list[i]);
+  x.textAlign="left";x.fillStyle="#1d232c";fit(list[i].name.toUpperCase(),i<2?44:34,640);x.fillText(list[i].name.toUpperCase(),350,y+h/2-(i<2?10:6));
+  x.fillStyle="#5d6573";x.font=`400 ${i<2?24:20}px ${F}`;x.fillText(POS[list[i].pos]||"",350,y+h/2+(i<2?24:18));y+=h+gap}
+ for(let k=0;k<rest;k++){const i=top+k,cx=k<col?64:550,cy=y+(k<col?k:k-col)*(rowH+rg);
+  rr(cx,cy,466,rowH,14);x.fillStyle="#fff";x.fill();
+  x.fillStyle=T.c1;x.textAlign="center";x.font=`italic 800 36px ${F}`;x.fillText(rk[i]+(tied[i]?"=":""),cx+50,cy+rowH/2+2);
+  av(cx+130,cy+rowH/2,26,list[i]);
+  x.textAlign="left";x.fillStyle="#1d232c";fit(list[i].name.toUpperCase(),28,276);x.fillText(list[i].name.toUpperCase(),cx+170,cy+rowH/2+1)}
+ x.fillStyle="rgba(255,255,255,.25)";x.fillRect(64,H-112,952,2);
+ x.fillStyle="#fff";x.textAlign="left";x.font=`italic 800 38px ${F}`;x.fillText("RANQUEJA ELS TEUS",64,H-58);
+ x.textAlign="right";x.font=`400 26px ${F}`;x.fillText(location.host||"Ranquing de jugadors",1016,H-58);
+ return c.toDataURL("image/png")}
+</script>
+</body>
+</html>
